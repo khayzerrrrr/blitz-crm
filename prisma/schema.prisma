@@ -32,13 +32,15 @@ enum SchoolStatus {
 }
 
 enum OpportunityStage {
-  NEW_PROSPECT
-  INITIAL_CONTACT
-  SCHOOL_VISIT_DONE
-  PROPOSAL_SENT
-  NEGOTIATION
-  CLOSED_WON
-  CLOSED_LOST
+  PROSPECT
+  TARGET
+  VISIT_1
+  VISIT_2
+  VISIT_3
+  PRESENTATION
+  PROPOSAL
+  MOU
+  NOT_THIS_TIME
 }
 
 model Role {
@@ -130,7 +132,7 @@ model Opportunity {
   school            School            @relation(fields: [schoolId], references: [id])
   userId            String
   user              User              @relation(fields: [userId], references: [id])
-  stage             OpportunityStage  @default(NEW_PROSPECT)
+  stage             OpportunityStage  @default(PROSPECT)
   value             Float             @default(0)
   expectedCloseDate DateTime?
   createdAt         DateTime          @default(now())

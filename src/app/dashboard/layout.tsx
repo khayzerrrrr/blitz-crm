@@ -18,18 +18,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setSidebarCollapsed(s === 'true');
     };
     window.addEventListener('storage', handleStorage);
-
-    const check = setInterval(() => {
-      const s = localStorage.getItem('sidebar-collapsed');
-      const v = s === 'true';
-      if (v !== sidebarCollapsed) setSidebarCollapsed(v);
-    }, 200);
-
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      clearInterval(check);
-    };
-  }, [sidebarCollapsed]);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   return (
     <SessionProvider>

@@ -8,6 +8,7 @@ export interface ExtendedUser {
   id: string;
   name: string;
   email: string;
+  image: string | null;
   role: RoleName;
   islandId: string | null;
   island: IslandName | null;
@@ -47,6 +48,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: user.id,
           name: user.name,
           email: user.email,
+          image: user.image,
           role: user.role.name as RoleName,
           islandId: user.islandId,
           island: (user.island?.name as IslandName) || null,
@@ -58,6 +60,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user && user.id) {
         token.id = user.id;
+        token.image = user.image ?? null;
         token.role = user.role;
         token.islandId = user.islandId;
         token.island = user.island;
@@ -69,6 +72,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         id: token.id as string,
         name: token.name as string,
         email: token.email as string,
+        image: token.image as string | null,
         role: token.role as RoleName,
         islandId: token.islandId as string | null,
         island: token.island as IslandName | null,

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import {
   LayoutDashboard, School, MapPin, GitBranch, DollarSign,
-  Users, ChevronLeft, ChevronRight, LogOut,
+  Users, ChevronLeft, ChevronRight, LogOut, Ban,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { href: '/visits', icon: MapPin, label: 'Visits' },
   { href: '/pipeline', icon: GitBranch, label: 'Pipeline' },
   { href: '/revenue', icon: DollarSign, label: 'Revenue' },
+  { href: '/not-this-time', icon: Ban, label: 'Not This Time' },
   { href: '/users', icon: Users, label: 'Users' },
 ];
 
