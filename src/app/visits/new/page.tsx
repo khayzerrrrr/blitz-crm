@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MapPin, Camera, Loader2 } from 'lucide-react';
+import { MapPin, Loader2 } from 'lucide-react';
 
 const VISIT_TYPES = [
   { value: 'cold_call', label: 'Cold Call' },
@@ -60,7 +60,7 @@ export default function NewVisitPage() {
       const visit = await visitRes.json();
 
       // Check-in
-      const checkinRes = await fetch(`/api/visits/${visit.id}/checkin`, {
+      await fetch(`/api/visits/${visit.id}/checkin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(gps),

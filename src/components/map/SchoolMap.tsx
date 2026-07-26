@@ -4,13 +4,6 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const icon = L.divIcon({
-  className: 'custom-marker',
-  html: '<div style="background:#F89029;color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;font-size:12px;box-shadow:0 2px 4px rgba(0,0,0,0.3);">📍</div>',
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-});
-
 const STATUS_COLORS: Record<string, string> = {
   POTENTIAL: '#94A3B8', CONTACTED: '#3B82F6', VISITED: '#F89029',
   PROPOSAL_SENT: '#8B5CF6', NEGOTIATION: '#F59E0B', WON: '#10B981', LOST: '#EF4444',

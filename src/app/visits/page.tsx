@@ -1,15 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, MapPin, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { MapPin, Loader2 } from 'lucide-react';
 
 interface Visit {
-  id: string; status: string; checkInTime: string | null; checkInLat: number | null;
-  createdAt: string; school?: { id: string; name: string; city: string | null; latitude: number | null; longitude: number | null };
-  user?: { name: string };
+  id: string; status: string; checkInTime: string | null;
+  createdAt: string; school?: { id: string; name: string; city: string | null };
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -22,7 +20,6 @@ export default function VisitsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [checkingIn, setCheckingIn] = useState<string | null>(null);
-  const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => { loadVisits(); }, [filter]);
 
@@ -36,44 +33,26 @@ export default function VisitsPage() {
     } catch {} finally { setLoading(false) }
   };
 
-  const getLocation = (): Promise<{ lat: number; lng: number }> => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) { alert('GPS tidak tersedia'); reject(); return; }
-      navigator.geolocation.getCurrentPosition(
-        pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => { alert('Gagal dapat lokasi'); reject(); },
-        { enableHighAccuracy: true, timeout: 15000 }
-      );
-    });
-  };
-
   const doCheckin = async (visitId: string) => {
+    if (!navigator.geolocation) { alert('GPS tidak tersedia'); return; }
     setCheckingIn(visitId);
-    try {
-      const loc = await getLocation();
-      const res = await fetch(`/api/visits/${visitId}/checkin`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loc),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        alert(err.error || 'Gagal check-in');
-      } else {
-        loadVisits();
-      }
-    } catch {} finally { setCheckingIn(null); setGps(null); }
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      try {
+        const res = await fetch(`/api/visits/${visitId}/checkin`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        });
+        if (!res.ok) { const err = await res.json(); alert(err.error || 'Gagal check-in'); }
+        else loadVisits();
+      } catch {} finally { setCheckingIn(null); }
+    }, () => { alert('Gagal dapat lokasi'); setCheckingIn(null); }, { enableHighAccuracy: true, timeout: 15000 });
   };
 
   const filters = ['', 'planned', 'checked_in', 'completed', 'cancelled'];
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Kunjungan</h1>
-      </div>
-
-      {/* Filter tabs */}
+      <h1 className="text-2xl font-bold text-slate-900">Kunjungan</h1>
       <div className="flex gap-1.5 overflow-x-auto pb-1">
         {filters.map(s => (
           <button key={s} onClick={() => setFilter(s)}
@@ -83,14 +62,13 @@ export default function VisitsPage() {
         ))}
       </div>
 
-      {/* Visit list */}
       <div className="space-y-2">
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 className="animate-spin text-slate-400" /></div>
         ) : visits.length === 0 ? (
           <Card><CardContent className="p-8 text-center text-slate-400"><MapPin size={32} className="mx-auto mb-2 opacity-50" /><p className="text-sm">Belum ada kunjungan</p></CardContent></Card>
         ) : visits.map(v => {
-          const school = v.school || {};
+          const school = v.school || {} as any;
           return (
             <Card key={v.id}>
               <CardContent className="p-4">
@@ -105,14 +83,13 @@ export default function VisitsPage() {
                   </div>
                   <Badge variant="outline" className={`text-[10px] ${STATUS_STYLES[v.status] || ''}`}>{v.status}</Badge>
                 </div>
-
                 <div className="flex gap-1.5 mt-3 pt-2 border-t border-slate-100">
                   {v.status === 'planned' && (
-                    <Button size="sm" variant="outline" onClick={() => doCheckin(v.id)} disabled={checkingIn === v.id}
-                      className="text-xs text-amber-600 border-amber-300 hover:bg-amber-50">
-                      {checkingIn === v.id ? <Loader2 size={12} className="animate-spin mr-1" /> : <MapPin size={12} className="mr-1" />}
+                    <button onClick={() => doCheckin(v.id)} disabled={checkingIn === v.id}
+                      className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg border border-amber-300 text-amber-600 hover:bg-amber-50 disabled:opacity-50 transition">
+                      {checkingIn === v.id ? <Loader2 size={12} className="animate-spin" /> : <MapPin size={12} />}
                       Check-in
-                    </Button>
+                    </button>
                   )}
                   {v.status === 'checked_in' && (
                     <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700">Sedang check-in</Badge>

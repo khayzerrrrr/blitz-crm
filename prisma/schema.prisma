@@ -74,6 +74,8 @@ model User {
 model School {
   id                String            @id @default(cuid())
   name              String
+  city              String?
+  province          String?
   address           String?
   latitude          Float?
   longitude         Float?
@@ -94,6 +96,7 @@ model Visit {
   school          School       @relation(fields: [schoolId], references: [id])
   userId          String
   user            User         @relation(fields: [userId], references: [id])
+  status          String       @default("planned")
   checkInTime     DateTime?
   checkOutTime    DateTime?
   checkInLat      Float?

@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, MapPin, Loader2 } from 'lucide-react';
+import { Search, MapPin, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 const SchoolMap = dynamic(() => import('@/components/map/SchoolMap'), { ssr: false, loading: () => <div className="h-[400px] bg-slate-100 rounded-lg flex items-center justify-center"><Loader2 className="animate-spin text-slate-400" /></div> });

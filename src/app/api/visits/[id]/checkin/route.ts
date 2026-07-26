@@ -12,14 +12,15 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { id } = await params;
 
   const { latitude, longitude } = await req.json();
   if (!latitude || !longitude) return NextResponse.json({ error: 'Latitude and longitude required' }, { status: 400 });
 
-  const visit = await prisma.visit.findUnique({ where: { id: params.id }, include: { school: true } });
+  const visit = await prisma.visit.findUnique({ where: { id: id }, include: { school: true } });
   if (!visit) return NextResponse.json({ error: 'Visit not found' }, { status: 404 });
 
   // Geofencing check
@@ -34,9 +35,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   const updated = await prisma.visit.update({
-    where: { id: params.id },
+    where: { id: id },
     data: { status: 'checked_in', checkInTime: new Date(), checkInLat: latitude, checkInLng: longitude },
   });
 
-  return NextResponse.json({ ...updated, distance: visit.school.latitude ? haversineDistance(latitude, longitude, visit.school.latitude, visit.school.longitude) : null });
+  const distance = visit.school.latitude && visit.school.longitude
+    ? haversineDistance(latitude, longitude, visit.school.latitude, visit.school.longitude)
+    : null;
+  return NextResponse.json({ ...updated, distance });
 }
