@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  SUPER_ADMIN
+  OWNER
+  MANAGEMENT
+  REGIONAL
+  SALES
+}
+
+enum IslandName {
+  SUMATRA
+  JAVA
+  BALI
+}
+
+enum SchoolStatus {
+  POTENTIAL
+  CONTACTED
+  VISITED
+  PROPOSAL_SENT
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum OpportunityStage {
+  NEW_PROSPECT
+  INITIAL_CONTACT
+  SCHOOL_VISIT_DONE
+  PROPOSAL_SENT
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+model Role {
+  id    String     @id @default(cuid())
+  name  RoleName   @unique
+  users User[]
+}
+
+model Island {
+  id           String         @id @default(cuid())
+  name         IslandName     @unique
+  users        User[]
+  schools      School[]
+}
+
+model User {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  passwordHash String
+  image        String?
+  roleId       String
+  role         Role           @relation(fields: [roleId], references: [id])
+  islandId     String?
+  island       Island?        @relation(fields: [islandId], references: [id])
+  assignedSchools School[]    @relation("SchoolAssignment")
+  visits       Visit[]
+  opportunities Opportunity[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model School {
+  id                String            @id @default(cuid())
+  name              String
+  address           String?
+  latitude          Float?
+  longitude         Float?
+  islandId          String?
+  island            Island?           @relation(fields: [islandId], references: [id])
+  status            SchoolStatus      @default(POTENTIAL)
+  assignedToUserId  String?
+  assignedTo        User?             @relation("SchoolAssignment", fields: [assignedToUserId], references: [id])
+  visits            Visit[]
+  opportunities     Opportunity[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model Visit {
+  id              String       @id @default(cuid())
+  schoolId        String
+  school          School       @relation(fields: [schoolId], references: [id])
+  userId          String
+  user            User         @relation(fields: [userId], references: [id])
+  checkInTime     DateTime?
+  checkOutTime    DateTime?
+  checkInLat      Float?
+  checkInLng      Float?
+  photoUrl        String?
+  surveyId        String?      @unique
+  survey          VisitSurvey?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model VisitSurvey {
+  id                  String   @id @default(cuid())
+  visitId             String   @unique
+  visit               Visit    @relation(fields: [visitId], references: [id])
+  studentCount        Int?
+  teacherCount        Int?
+  hasEnglishProgram   Boolean?
+  existingProgramName String?
+  picName             String?
+  picPosition         String?
+  picPhone            String?
+  visitNotes          String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Opportunity {
+  id                String            @id @default(cuid())
+  schoolId          String
+  school            School            @relation(fields: [schoolId], references: [id])
+  userId            String
+  user              User              @relation(fields: [userId], references: [id])
+  stage             OpportunityStage  @default(NEW_PROSPECT)
+  value             Float             @default(0)
+  expectedCloseDate DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
