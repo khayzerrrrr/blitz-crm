@@ -3,8 +3,10 @@ import '@/styles/global.css';
 
 export const metadata: Metadata = {
   title: 'BLITZ CRM',
-  description: 'Field Sales CRM untuk program pendidikan bilingual di Indonesia.',
+  description: 'Field Sales CRM for Bilingual Education',
 };
+
+export const dynamic = 'force-dynamic';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
