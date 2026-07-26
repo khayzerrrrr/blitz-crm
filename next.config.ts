@@ -4,7 +4,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true },
   output: 'standalone',
 };
 

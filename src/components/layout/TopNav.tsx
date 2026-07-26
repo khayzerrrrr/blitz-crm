@@ -1,95 +1,120 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
-import { LayoutDashboard, School, MapPin, GitBranch, BarChart3, Calendar, Search, Bell, Plus, ChevronDown } from 'lucide-react';
+import { Search, Bell, Plus, Menu, LogOut, User, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-
-const NAV = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/schools', icon: School, label: 'Schools' },
-  { href: '/visits', icon: MapPin, label: 'Visits' },
-  { href: '/pipeline', icon: GitBranch, label: 'Pipeline' },
-  { href: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { href: '/calendar', icon: Calendar, label: 'Calendar' },
-];
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function TopNav() {
-  const pathname = usePathname();
   const { data: session } = useSession();
-  const [showSearch, setShowSearch] = useState(false);
-  const [showUser, setShowUser] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => signOut();
+    document.addEventListener('signout', handler);
+    return () => document.removeEventListener('signout', handler);
+  }, []);
+
+  const initials = session?.user?.name
+    ?.split(' ')
+    .map(n => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'U';
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-surface-200">
-      <div className="flex items-center justify-between h-16 px-4 lg:px-6 max-w-[1600px] mx-auto">
-        {/* Left: Logo + Nav */}
-        <div className="flex items-center gap-8">
-          <Link href="/dashboard" className="flex items-center gap-2.5 shrink-0">
-            <Image src="/logo/blitz-logo-white.png" alt="BLITZ" width={28} height={28} className="h-7 w-7" />
-            <div className="hidden sm:block">
-              <span className="text-sm font-bold text-surface-900">BLITZ</span>
-              <span className="text-[10px] text-brand-500 ml-1 font-semibold">CRM</span>
-            </div>
-          </Link>
+    <header
+      className={cn(
+        'sticky top-0 z-30 transition-all duration-300',
+        scrolled
+          ? 'glass shadow-sm border-b border-surface-200/50'
+          : 'bg-transparent border-b border-transparent'
+      )}
+    >
+      <div className="flex items-center justify-between h-16 px-4 lg:px-6">
+        {/* Left: Mobile menu trigger */}
+        <button
+          className="lg:hidden p-2 -ml-2 rounded-xl text-surface-600 hover:bg-surface-100 transition-all"
+          onClick={() => document.dispatchEvent(new CustomEvent('toggle-mobile-sidebar'))}
+        >
+          <Menu size={20} />
+        </button>
 
-          <nav className="hidden lg:flex items-center gap-1">
-            {NAV.map(({ href, icon: Icon, label }) => {
-              const active = pathname.startsWith(href);
-              return (
-                <Link key={href} href={href}
-                  className={cn(
-                    'flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200',
-                    active ? 'bg-brand-50 text-brand-600' : 'text-surface-500 hover:text-surface-900 hover:bg-surface-100'
-                  )}
-                >
-                  <Icon size={16} />
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+        {/* Page title placeholder - could be dynamic */}
+        <div className="hidden lg:block" />
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowSearch(!showSearch)}
-            className="p-2.5 rounded-xl hover:bg-surface-100 text-surface-400 hover:text-surface-600 transition-all">
+          {/* Search */}
+          <button className="p-2.5 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 transition-all hidden sm:block">
             <Search size={18} />
           </button>
-          <button className="p-2.5 rounded-xl hover:bg-surface-100 text-surface-400 hover:text-surface-600 transition-all relative">
+
+          {/* Notifications */}
+          <button className="p-2.5 rounded-xl text-surface-400 hover:text-surface-600 hover:bg-surface-100 transition-all relative">
             <Bell size={18} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-500 ring-2 ring-white" />
+            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
           </button>
-          <button className="hidden sm:flex items-center gap-1.5 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-sm font-semibold transition-all shadow-sm">
-            <Plus size={16} />
-            <span>New</span>
-          </button>
-          <div className="relative">
-            <button onClick={() => setShowUser(!showUser)} className="flex items-center gap-2 p-1.5 pr-2 rounded-xl hover:bg-surface-100 transition-all">
-              <Avatar className="w-8 h-8">
-                <AvatarFallback className="bg-brand-500 text-white text-xs font-medium">
-                  {session?.user?.name?.[0] || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <ChevronDown size={14} className="text-surface-400 hidden sm:block" />
-            </button>
-            {showUser && (
-              <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-xl shadow-dropdown border border-surface-200 p-1.5">
-                <div className="px-3 py-2 border-b border-surface-100 mb-1">
-                  <p className="text-sm font-medium">{session?.user?.name}</p>
-                  <p className="text-xs text-surface-400">{session?.user?.role}</p>
+
+          {/* New Visit CTA */}
+          <Button size="sm" className="hidden sm:flex items-center gap-1.5 shadow-sm" asChild>
+            <Link href="/visits/new">
+              <Plus size={16} strokeWidth={2.5} />
+              <span>New Visit</span>
+            </Link>
+          </Button>
+
+          {/* User Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-100 transition-all ml-1">
+                <div className="size-8 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white text-[11px] font-bold shadow-sm">
+                  {initials}
                 </div>
-                <Link href="/profile" className="block px-3 py-2 text-sm text-surface-600 hover:bg-surface-50 rounded-lg">Profile</Link>
-                <Link href="/settings" className="block px-3 py-2 text-sm text-surface-600 hover:bg-surface-50 rounded-lg">Settings</Link>
-                <button onClick={() => signOut()} className="w-full text-left px-3 py-2 text-sm text-danger hover:bg-red-50 rounded-lg">Log out</button>
-              </div>
-            )}
-          </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 mt-2">
+              <DropdownMenuLabel>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold">{session?.user?.name}</span>
+                  <span className="text-xs text-surface-400 font-normal">{session?.user?.role}</span>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User size={14} className="mr-2" />
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings size={14} className="mr-2" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-danger-500 focus:text-danger-500"
+                onClick={() => signOut()}
+              >
+                <LogOut size={14} className="mr-2" />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

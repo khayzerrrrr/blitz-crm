@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Loader2, Clock, CheckCircle2, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { MapPin, Loader2, Clock, CheckCircle2, Calendar, Plus } from 'lucide-react';
+import Link from 'next/link';
 
 interface Visit {
   id: string; status: string; checkInTime: string | null;
@@ -11,8 +13,17 @@ interface Visit {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  planned: 'bg-blue-100 text-blue-700', checked_in: 'bg-amber-100 text-amber-700',
-  completed: 'bg-green-100 text-green-700', cancelled: 'bg-red-100 text-red-600',
+  planned: 'bg-blue-50 text-blue-700 border-blue-200',
+  checked_in: 'bg-amber-50 text-amber-700 border-amber-200',
+  completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  cancelled: 'bg-red-50 text-red-600 border-red-200',
+};
+
+const STATUS_ICONS: Record<string, typeof Clock> = {
+  planned: Clock,
+  checked_in: MapPin,
+  completed: CheckCircle2,
+  cancelled: Clock,
 };
 
 const FILTERS = ['', 'planned', 'checked_in', 'completed'];
@@ -32,7 +43,7 @@ export default function VisitsPage() {
       const res = await fetch(`/api/visits${params}`);
       const json = await res.json();
       setVisits(json.data || []);
-    } catch {} finally { setLoading(false) }
+    } catch {} finally { setLoading(false); }
   };
 
   const doCheckin = async (visitId: string) => {
@@ -51,57 +62,102 @@ export default function VisitsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-surface-900">Visits</h1>
-          <p className="text-sm text-surface-400 mt-0.5">{visits.length} total</p>
+          <h1 className="text-2xl font-extrabold text-surface-900 tracking-tight">Visits</h1>
+          <p className="text-sm text-surface-400 mt-0.5">{visits.length} total visits</p>
         </div>
+        <Button asChild className="shadow-lg shadow-brand-500/20 rounded-xl" size="sm">
+          <Link href="/visits/new"><Plus size={16} strokeWidth={2.5} />New Visit</Link>
+        </Button>
       </div>
 
-      <div className="flex gap-1.5 pb-1">
+      {/* Filter Tabs */}
+      <div className="flex gap-1.5">
         {FILTERS.map(s => (
-          <button key={s} onClick={() => setFilter(s)}
-            className={`text-xs px-3.5 py-2 rounded-full font-medium border transition-all ${
-              filter === s ? 'bg-brand-500 text-white border-brand-500 shadow-sm' : 'bg-white border-surface-200 text-surface-500 hover:border-surface-300'
-            }`}>
+          <button
+            key={s}
+            onClick={() => setFilter(s)}
+            className={`text-xs px-4 py-2 rounded-xl font-semibold border transition-all duration-200 ${
+              filter === s
+                ? 'bg-brand-500 text-white border-brand-500 shadow-sm shadow-brand-500/20'
+                : 'glass-card text-surface-500 hover:text-surface-700'
+            }`}
+          >
             {s || 'All'}
           </button>
         ))}
       </div>
 
-      <div className="space-y-2">
+      {/* Visit Cards */}
+      <div className="space-y-2.5">
         {loading ? (
-          <div className="flex justify-center py-16"><Loader2 className="animate-spin text-surface-400" size={24} /></div>
+          <div className="space-y-2.5">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 rounded-2xl" />
+            ))}
+          </div>
         ) : visits.length === 0 ? (
-          <div className="text-center py-16"><MapPin size={40} className="mx-auto mb-3 text-surface-300" /><p className="text-sm text-surface-400">No visits yet</p></div>
-        ) : visits.map(v => {
+          <div className="text-center py-16">
+            <div className="size-16 rounded-2xl bg-surface-100 flex items-center justify-center mx-auto mb-4">
+              <MapPin size={28} className="text-surface-300" />
+            </div>
+            <p className="text-base font-semibold text-surface-400">No visits yet</p>
+            <p className="text-xs text-surface-300 mt-1">Start by creating a new visit</p>
+            <Button variant="outline" size="sm" className="mt-4 rounded-xl" asChild>
+              <Link href="/visits/new"><Plus size={14} className="mr-1" />New Visit</Link>
+            </Button>
+          </div>
+        ) : visits.map((v, i) => {
           const school = v.school || {} as any;
+          const StatusIcon = STATUS_ICONS[v.status] || Clock;
           return (
-            <div key={v.id} className="bg-white rounded-xl border border-surface-200 shadow-card p-4 hover:shadow-card-hover transition-all">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-surface-900 truncate">{school.name || '—'}</p>
-                  <p className="text-xs text-surface-400 mt-0.5">{school.city || ''}</p>
-                  <div className="flex items-center gap-3 mt-2 text-xs text-surface-400">
-                    <span className="flex items-center gap-1"><Calendar size={12} />{new Date(v.createdAt).toLocaleDateString('id-ID')}</span>
-                    {v.checkInTime && <span className="flex items-center gap-1"><CheckCircle2 size={12} className="text-success" />Checked in</span>}
+            <div
+              key={v.id}
+              className="glass-card rounded-2xl p-4 animate-slide-up"
+              style={{ animationDelay: `${i * 0.05}s` }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex gap-3 min-w-0">
+                  <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    v.status === 'completed' ? 'bg-emerald-50 text-emerald-600' :
+                    v.status === 'checked_in' ? 'bg-amber-50 text-amber-600' :
+                    'bg-blue-50 text-blue-600'
+                  }`}>
+                    <StatusIcon size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-surface-800 truncate">{school.name || '--'}</p>
+                    <p className="text-xs text-surface-400 mt-0.5">{school.city || ''}</p>
+                    <div className="flex items-center gap-3 mt-2 text-[11px] text-surface-400">
+                      <span className="flex items-center gap-1"><Calendar size={11} />{new Date(v.createdAt).toLocaleDateString('id-ID')}</span>
+                      {v.checkInTime && <span className="flex items-center gap-1 text-emerald-600"><CheckCircle2 size={11} />Checked in</span>}
+                    </div>
                   </div>
                 </div>
-                <Badge variant="outline" className={`text-[10px] font-medium ${STATUS_STYLES[v.status] || ''}`}>{v.status}</Badge>
+                <Badge variant="outline" className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border ${STATUS_STYLES[v.status] || ''}`}>
+                  {v.status.replace('_', ' ')}
+                </Badge>
               </div>
-              <div className="flex gap-2 mt-3 pt-3 border-t border-surface-100">
+
+              {/* Actions */}
+              <div className="flex gap-2 mt-3 pt-3 border-t border-surface-100/80">
                 {v.status === 'planned' && (
-                  <button onClick={() => doCheckin(v.id)} disabled={checkingIn === v.id}
-                    className="flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-lg bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-50 transition-all font-medium shadow-sm">
+                  <button
+                    onClick={() => doCheckin(v.id)}
+                    disabled={checkingIn === v.id}
+                    className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-xl bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-50 transition-all font-semibold shadow-sm shadow-brand-500/20"
+                  >
                     {checkingIn === v.id ? <Loader2 size={12} className="animate-spin" /> : <MapPin size={12} />}
                     Check In
                   </button>
                 )}
                 {v.status === 'checked_in' && (
-                  <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-200">
-                    <Clock size={12} className="mr-1" /> In Progress
-                  </Badge>
+                  <div className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 font-medium">
+                    <div className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    In Progress
+                  </div>
                 )}
               </div>
             </div>
@@ -111,4 +167,3 @@ export default function VisitsPage() {
     </div>
   );
 }
-
